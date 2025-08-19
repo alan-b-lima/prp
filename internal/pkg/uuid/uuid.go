@@ -1,5 +1,18 @@
-// Copyright 2025 Alan Barbosa Lima
-// Licensed under the Apache License, Version 2.0
+// Copyright (C) 2025 Alan Barbosa Lima
+//
+// PRP is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// PRP is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+// License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with PRP, located in LICENSE, at the root of the source
+// tree. If not, see <https://www.gnu.org/licenses/>.
 
 // This package implements a UUID generator and some other
 // functionalities revolving UUIDs. Read in RFC9562 for more info
@@ -36,6 +49,11 @@ func init() {
 
 	source = rand.NewPCG(lo, hi)
 }
+
+var (
+	errBadSliceLength = errors.New("given slice does not has 16 bytes")
+	errBadUUIDString  = errors.New("given string could not be parsed correctly")
+)
 
 // Generates a new UUID accourding to version 7. It's safe to call
 // this function from multiple goroutines.
@@ -86,8 +104,6 @@ func NewUUIDv7() UUID {
 	}
 }
 
-var errBadSliceLength = errors.New("given slice does not has 16 bytes")
-
 // Converts an UUID from a byte slice.
 func FromBytes(bytes []byte) (UUID, error) {
 	if len(bytes) != 16 {
@@ -96,8 +112,6 @@ func FromBytes(bytes []byte) (UUID, error) {
 
 	return UUID(bytes), nil
 }
-
-var errBadUUIDString = errors.New("given string could not be parsed correctly")
 
 // Converts an UUID from a string format.
 func FromString(str string) (UUID, error) {
@@ -114,7 +128,7 @@ func FromString(str string) (UUID, error) {
 		&uuid[8], &uuid[9],
 		&uuid[10], &uuid[11], &uuid[12], &uuid[13], &uuid[14], &uuid[15],
 	)
-	if err !=nil {
+	if err != nil {
 		return UUID{}, err
 	}
 	if n != 16 {
@@ -122,6 +136,13 @@ func FromString(str string) (UUID, error) {
 	}
 
 	return uuid, nil
+}
+
+// Verifies whether the given UUID is the Nil UUID. Not to be
+// confused with a nil pointer to an UUID. Equivalent to using ==
+// against the zero value of this type.
+func (uuid UUID) IsNil() bool {
+	return uuid == UUID{}
 }
 
 // Implements the interface [fmt.Stringer] on the UUID type.

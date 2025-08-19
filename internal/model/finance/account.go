@@ -1,14 +1,27 @@
-// Copyright 2025 Alan Barbosa Lima
-// Licensed under the Apache License, Version 2.0
+// Copyright (C) 2025 Alan Barbosa Lima
+//
+// PRP is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// PRP is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+// License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with PRP, located in LICENSE, at the root of the source
+// tree. If not, see <https://www.gnu.org/licenses/>.
 
 package finance
 
 import (
-	"github.com/alan-b-lima/prp/server/internal/uuid"
-	"github.com/alan-b-lima/prp/server/pkg/model/user"
+	"github.com/alan-b-lima/prp/internal/model/user"
+	"github.com/alan-b-lima/prp/internal/pkg/uuid"
 )
 
-type AccountUUID uuid.UUID
+type AccountUUID = uuid.UUID
 
 type Account struct {
 	uuid         AccountUUID
@@ -20,7 +33,7 @@ type Account struct {
 
 func NewAccount(name string, account_type AccountType, user user.UserUUID, parent AccountUUID) *Account {
 	return &Account{
-		uuid:         AccountUUID(uuid.NewUUIDv7()),
+		uuid:         uuid.NewUUIDv7(),
 		name:         name,
 		account_type: account_type,
 		user:         user,
