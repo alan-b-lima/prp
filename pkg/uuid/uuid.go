@@ -106,7 +106,9 @@ func NewUUIDv7() UUID {
 	}
 }
 
-// Converts an UUID from a byte slice.
+// Converts an UUID from a byte slice. Note that this function is NOT
+// interchangeable with [FromString], even considering convertion,
+// because this does NOT look into formatting.
 func FromBytes(bytes []byte) (UUID, error) {
 	if len(bytes) != 16 {
 		return UUID{}, errBadSliceLength
@@ -115,7 +117,8 @@ func FromBytes(bytes []byte) (UUID, error) {
 	return UUID(bytes), nil
 }
 
-// Converts an UUID from a string format.
+// Converts an UUID from a string format. Note that this function is
+// NOT interchangeable with [FromBytes], even considering convertion.
 func FromString(str string) (UUID, error) {
 	if len(str) != 36 {
 		return UUID{}, errBadUUIDString
@@ -155,4 +158,20 @@ func (uuid UUID) String() string {
 		uuid[8], uuid[9],
 		uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15],
 	)
+}
+
+// Implements the interface [json.Marshaler] on the UUID type.
+func (uuid *UUID) MarshalJSON() ([]byte, error) {
+	return fmt.Appendf(nil, `"%s"`, uuid.String()), nil
+}
+
+// Implements the interface [json.Unmarshaler] on the UUID type.
+func (uuid *UUID) UnmarshalJSON(buf []byte) error {
+	decoded, err := FromString(string(buf))
+	if err != nil {
+		return err
+	}
+
+	*uuid = decoded
+	return nil
 }
