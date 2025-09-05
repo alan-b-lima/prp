@@ -4,8 +4,7 @@ PRP is an implementation of a simplified ERP, for a person, hence the name PRP -
 
 ## Contributors
 
-<div style="display:flex;gap:.5rem">
-    <img style="border-radius:100%;width:20pt;" src="https://avatars.githubusercontent.com/alan-b-lima"> <div>Alan Barbosa Lima - <a href=https://github.com/alan-b-lima>alan-b-lima</a></div>
-</div>
+* Alan Barbosa Lima - [alan-b-lima](https://github.com/alan-b-lima)
 
 ## References
+
