@@ -51,8 +51,8 @@ func init() {
 }
 
 var (
-	errBadSliceLength = errors.New("given slice does not has 16 bytes")
-	errBadUUIDString  = errors.New("given string could not be parsed correctly")
+	errBadSliceLength = errors.New("uuid: given slice does not has 16 bytes")
+	errBadUUIDString  = errors.New("uuid: given string could not be parsed correctly")
 )
 
 var _UUIDFormat = "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x"
