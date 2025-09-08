@@ -2,7 +2,9 @@ package user
 
 import (
 	"errors"
+	"regexp"
 
+	"github.com/alan-b-lima/prp/pkg/hash"
 	"github.com/alan-b-lima/prp/pkg/uuid"
 )
 
@@ -10,24 +12,34 @@ type User struct {
 	uuid     uuid.UUID
 	name     string
 	login    string
+	password [32]byte
+	salt     [16]byte
 }
 
 type UserScrath struct {
-	Name  string
-	Login string
+	Name     string
+	Login    string
+	Password string
 }
 
-var ErrLoginEmptyString = errors.New("user: login cannot be empty")
+var (
+	ErrNameEmpty                       = errors.New("user: name cannot be empty")
+	ErrLoginEmpty                      = errors.New("user: login cannot be empty")
+	ErrPasswordEmpty                   = errors.New("user: password cannot be empty")
+	ErrPasswordTooShort                = errors.New("user: password must be at least 8 characters long")
+	ErrPasswordTrailingOrLeadingSpaces = errors.New("user: password must not begin or end with a space")
+	ErrPasswordMalformed               = errors.New("user: password contains unallowed characters")
+)
 
 func NewUser(us *UserScrath) (*User, error) {
 	var u User
 
-	errs := [...]error{
+	err := errors.Join(
 		u.SetName(us.Name),
 		u.SetLogin(us.Login),
-	}
-
-	if err := errors.Join(errs[:]...); err != nil {
+		u.SetPassword(us.Password),
+	)
+	if err != nil {
 		return nil, err
 	}
 
@@ -44,6 +56,10 @@ func (u *User) Name() string {
 }
 
 func (u *User) SetName(name string) error {
+	if name == "" {
+		return ErrNameEmpty
+	}
+
 	u.name = name
 	return nil
 }
@@ -54,9 +70,33 @@ func (u *User) Login() string {
 
 func (u *User) SetLogin(login string) error {
 	if login == "" {
-		return ErrLoginEmptyString
+		return ErrLoginEmpty
 	}
 
 	u.login = login
+	return nil
+}
+
+var PasswordWellformedPattern = regexp.MustCompile(`^[^\x00-\x1F]*$`)
+
+func (u *User) SetPassword(password string) error {
+	if password == "" {
+		return ErrPasswordEmpty
+	}
+
+	if len(password) < 8 {
+		return ErrPasswordTooShort
+	}
+
+	if password[0] == ' ' || password[len(password)-1] == ' ' {
+		return ErrPasswordTrailingOrLeadingSpaces
+	}
+
+	if !PasswordWellformedPattern.MatchString(password) {
+		return ErrPasswordMalformed
+	}
+
+	u.salt = hash.NewSalt()
+	u.password = hash.Hash(append([]byte(password), u.salt[:]...))
 	return nil
 }

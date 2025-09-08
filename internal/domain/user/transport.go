@@ -5,9 +5,6 @@ import "github.com/alan-b-lima/prp/pkg/uuid"
 type NoContent struct{}
 
 type (
-	// Has not been useful
-	Request interface{ _request() }
-
 	GetAllRequest NoContent
 
 	GetRequest struct {
@@ -15,20 +12,23 @@ type (
 	}
 
 	CreateRequest struct {
-		Name  string `json:"name"`
-		Login string `json:"login"`
+		Name     string `json:"name"`
+		Login    string `json:"login"`
+		Password string `json:"password"`
 	}
 
 	UpdateRequest struct {
-		UUID  uuid.UUID `json:"uuid"`
-		Name  string    `json:"name"`
-		Login string    `json:"login"`
+		UUID     uuid.UUID `json:"uuid"`
+		Name     string    `json:"name"`
+		Login    string    `json:"login"`
+		Password string    `json:"password"`
 	}
 
 	PatchRequest struct {
-		UUID  uuid.UUID `json:"uuid"`
-		Name  *string   `json:"name"`
-		Login *string   `json:"login"`
+		UUID     uuid.UUID `json:"uuid"`
+		Name     *string   `json:"name"`
+		Login    *string   `json:"login"`
+		Password *string   `json:"password"`
 	}
 
 	DeleteRequest struct {
@@ -36,22 +36,13 @@ type (
 	}
 )
 
-func (*GetAllRequest) _request() {}
-func (*GetRequest) _request()    {}
-func (*CreateRequest) _request() {}
-func (*UpdateRequest) _request() {}
-func (*DeleteRequest) _request() {}
-
 type (
-	// Has not been useful
-	Response interface{ _response() }
-
 	GetAllResponse []GetResponse
 
 	GetResponse struct {
-		UUID  uuid.UUID `json:"uuid"`
-		Name  string    `json:"name"`
-		Login string    `json:"login"`
+		UUID     uuid.UUID `json:"uuid"`
+		Name     string    `json:"name"`
+		Login    string    `json:"login"`
 	}
 
 	CreateResponse NoContent
@@ -59,9 +50,3 @@ type (
 	PatchResponse  NoContent
 	DeleteResponse NoContent
 )
-
-func (*GetAllResponse) _response() {}
-func (*GetResponse) _response()    {}
-func (*CreateResponse) _response() {}
-func (*UpdateResponse) _response() {}
-func (*DeleteResponse) _response() {}

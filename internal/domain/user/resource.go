@@ -127,7 +127,7 @@ func (router *Router) UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.UUID != uuid {
-		http.Error(w, "update request body must not contain and uuid field", http.StatusBadRequest)
+		http.Error(w, "update request body must not contain and UUID field", http.StatusBadRequest)
 		return
 	}
 
@@ -162,7 +162,7 @@ func (router *Router) PatchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.UUID != uuid {
-		http.Error(w, "update request body must not contain and uuid field", http.StatusBadRequest)
+		http.Error(w, "patch request body must not contain and UUID field", http.StatusBadRequest)
 		return
 	}
 

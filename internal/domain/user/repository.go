@@ -15,11 +15,14 @@ var ErrUserNotFound = errors.New("user not found")
 func NewRepository() Repository {
 	repo := Repository{repo: make(map[uuid.UUID]User)}
 
-	uuid1, _ := uuid.FromString("00000000-0000-0000-0000-000000000001")
-	uuid2, _ := uuid.FromString("00000000-0000-0000-0000-000000000002")
+	/*temp*/
+	{
+		uuid1, _ := uuid.FromString("00000000-0000-0000-0000-000000000001")
+		uuid2, _ := uuid.FromString("00000000-0000-0000-0000-000000000002")
 
-	repo.repo[uuid1] = User{uuid1, "Alan", "alan"}
-	repo.repo[uuid2] = User{uuid2, "Juan", "juan"}
+		repo.repo[uuid1] = User{uuid: uuid1, name: "Alan", login: "alan"}
+		repo.repo[uuid2] = User{uuid: uuid2, name: "Vitor", login: "vecto"}
+	}
 
 	return repo
 }
@@ -31,7 +34,7 @@ func (r *Repository) GetAll(req *GetAllRequest) (GetAllResponse, error) {
 
 	res := GetAllResponse(make([]GetResponse, 0, len(r.repo)))
 	for _, user := range r.repo {
-		res = append(res, _RespondUser(&user))
+		res = append(res, respond_user(&user))
 	}
 
 	return res, nil
@@ -43,10 +46,10 @@ func (r *Repository) Get(req *GetRequest) (GetResponse, error) {
 		return GetResponse{}, ErrUserNotFound
 	}
 
-	return _RespondUser(&user), nil
+	return respond_user(&user), nil
 }
 
-func _RespondUser(user *User) GetResponse {
+func respond_user(user *User) GetResponse {
 	return GetResponse{
 		UUID:  user.UUID(),
 		Name:  user.Name(),
@@ -56,8 +59,9 @@ func _RespondUser(user *User) GetResponse {
 
 func (r *Repository) Create(req *CreateRequest) (CreateResponse, error) {
 	user, err := NewUser(&UserScrath{
-		Name:  req.Name,
-		Login: req.Login,
+		Name:     req.Name,
+		Login:    req.Login,
+		Password: req.Password,
 	})
 	if err != nil {
 		return CreateResponse{}, err
@@ -73,12 +77,12 @@ func (r *Repository) Update(req *UpdateRequest) (UpdateResponse, error) {
 		return UpdateResponse{}, ErrUserNotFound
 	}
 
-	errs := [...]error{
+	err := errors.Join(
 		user.SetName(req.Name),
 		user.SetLogin(req.Login),
-	}
-
-	if err := errors.Join(errs[:]...); err != nil {
+		user.SetPassword(req.Password),
+	)
+	if err != nil {
 		return UpdateResponse{}, err
 	}
 
@@ -92,17 +96,25 @@ func (r *Repository) Patch(req *PatchRequest) (PatchResponse, error) {
 		return PatchResponse{}, ErrUserNotFound
 	}
 
-	errs := [2]error{}
-
-	if req.Name != nil  { errs[0] = user.SetName(*req.Name) }
-	if req.Login != nil { errs[1] = user.SetLogin(*req.Login) }
-
-	if err := errors.Join(errs[:]...); err != nil {
+	err := errors.Join(
+		non_nil_then(req.Name, user.SetName),
+		non_nil_then(req.Login, user.SetLogin),
+		non_nil_then(req.Password, user.SetPassword),
+	)
+	if err != nil {
 		return PatchResponse{}, err
 	}
 
 	r.repo[req.UUID] = user
 	return PatchResponse{}, nil
+}
+
+func non_nil_then[R any](ptr *R, fn func(R) error) error {
+	if ptr != nil {
+		return fn(*ptr)
+	}
+
+	return nil
 }
 
 func (r *Repository) Delete(req *DeleteRequest) (DeleteResponse, error) {
