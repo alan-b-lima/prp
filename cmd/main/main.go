@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -27,21 +26,7 @@ func main() {
 		return
 	}
 
-	mux := http.NewServeMux()
-
-	mux.Handle("/", api.NewRouter())
-	mux.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
-		var status int
-		dec := json.NewDecoder(r.Body)
-		if err := dec.Decode(&status); err != nil {
-			http.Error(w, "status not valid", http.StatusBadRequest)
-			return
-		}
-
-		w.WriteHeader(status)
-	})
-
-	srv := http.Server{Handler: LoggingMiddleware(mux)}
+	srv := http.Server{Handler: LoggingMiddleware(api.NewAPIMux())}
 	EnableSignalTermination(&srv)
 
 	addr = strings.Replace(ln.Addr().String(), "[::]", "localhost", 1)
@@ -98,8 +83,8 @@ func EnableSignalTermination(srv *http.Server) {
 			fmt.Println("Killing the server...")
 			os.Exit(1)
 
-		case exit := <-done:
-			os.Exit(exit)
+		case <-done:
+			return
 		}
 	}()
 }

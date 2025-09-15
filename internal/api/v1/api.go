@@ -6,11 +6,11 @@ import (
 	"github.com/alan-b-lima/prp/internal/domain/user"
 )
 
-func NewRouter() http.Handler {
+func NewAPIMux() http.Handler {
 	mux := http.NewServeMux()
 
 	repo := user.NewRepository()
-	router := user.NewRouter(&repo)
+	router := user.NewResource(&repo)
 
 	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", &router))
 
