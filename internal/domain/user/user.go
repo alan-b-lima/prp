@@ -23,16 +23,16 @@ type UserScrath struct {
 }
 
 var (
-	ErrNameEmpty                       = errors.New("user: name cannot be empty")
-	ErrLoginEmpty                      = errors.New("user: login cannot be empty")
-	ErrPasswordEmpty                   = errors.New("user: password cannot be empty")
-	ErrPasswordTooShort                = errors.New("user: password must be at least 8 characters long")
-	ErrPasswordTrailingOrLeadingSpaces = errors.New("user: password must not begin or end with a space")
-	ErrPasswordMalformed               = errors.New("user: password contains unallowed characters")
+	ErrNameEmpty                       = errors.New("user(entity): name cannot be empty")
+	ErrLoginEmpty                      = errors.New("user(entity): login cannot be empty")
+	ErrPasswordEmpty                   = errors.New("user(entity): password cannot be empty")
+	ErrPasswordTooShort                = errors.New("user(entity): password must be at least 8 characters long")
+	ErrPasswordTrailingOrLeadingSpaces = errors.New("user(entity): password must not begin or end with a space")
+	ErrPasswordMalformed               = errors.New("user(entity): password contains unallowed characters")
 )
 
 func NewUser(us *UserScrath) (*User, error) {
-	var u User
+	u := new(User)
 
 	err := errors.Join(
 		u.SetName(us.Name),
@@ -44,7 +44,7 @@ func NewUser(us *UserScrath) (*User, error) {
 	}
 
 	u.uuid = uuid.NewUUIDv7()
-	return &u, nil
+	return u, nil
 }
 
 func (u *User) UUID() uuid.UUID {
