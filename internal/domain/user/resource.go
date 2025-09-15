@@ -8,39 +8,41 @@ import (
 	"github.com/alan-b-lima/prp/pkg/uuid"
 )
 
-type Router struct {
+type Resource struct {
 	Repo *Repository
 	mux  *http.ServeMux
 }
 
-func NewRouter(repo *Repository) Router {
-	router := Router{
+func NewResource(repo *Repository) Resource {
+	router := Resource{
 		Repo: repo,
 		mux:  http.NewServeMux(),
 	}
 
-	router.mux.HandleFunc(   "GET /users",      router.GetAllHandler)
-	router.mux.HandleFunc(   "GET /users/{id}", router.GetHandler)
-	router.mux.HandleFunc(  "POST /users",      router.CreateHandler)
-	router.mux.HandleFunc(   "PUT /users/{id}", router.UpdateHandler)
-	router.mux.HandleFunc( "PATCH /users/{id}", router.PatchHandler)
+	router.mux.HandleFunc("GET /users", router.GetAllHandler)
+	router.mux.HandleFunc("GET /users/{id}", router.GetHandler)
+	router.mux.HandleFunc("POST /users", router.CreateHandler)
+	router.mux.HandleFunc("PUT /users/{id}", router.UpdateHandler)
+	router.mux.HandleFunc("PATCH /users/{id}", router.PatchHandler)
 	router.mux.HandleFunc("DELETE /users/{id}", router.DeleteHandler)
 
 	return router
 }
 
-func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (router *Resource) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router.mux.ServeHTTP(w, r)
 }
 
-func (router *Router) GetAllHandler(w http.ResponseWriter, r *http.Request) {
-	users, err := router.Repo.GetAll(&GetAllRequest{})
-	if err != nil {
+func (router *Resource) GetAllHandler(w http.ResponseWriter, r *http.Request) {
+	req := GetAllRequest{Limit: 100}
+	var res GetAllResponse
+
+	if err := router.Repo.GetAll(&res, &req); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	buf, err := json.Marshal(users)
+	buf, err := json.Marshal(res)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -51,7 +53,7 @@ func (router *Router) GetAllHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(buf)
 }
 
-func (router *Router) GetHandler(w http.ResponseWriter, r *http.Request) {
+func (router *Resource) GetHandler(w http.ResponseWriter, r *http.Request) {
 	uuid, err := uuid.FromString(r.PathValue("id"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -59,9 +61,9 @@ func (router *Router) GetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req := GetRequest{UUID: uuid}
+	var user GetResponse
 
-	user, err := router.Repo.Get(&req)
-	if err != nil {
+	if err := router.Repo.Get(&user, &req); err != nil {
 		if err == ErrUserNotFound {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
@@ -82,7 +84,7 @@ func (router *Router) GetHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(buf)
 }
 
-func (router *Router) CreateHandler(w http.ResponseWriter, r *http.Request) {
+func (router *Resource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 	buf, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -96,8 +98,7 @@ func (router *Router) CreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = router.Repo.Create(&req)
-	if err != nil {
+	if err := router.Repo.Create(nil, &req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -105,7 +106,7 @@ func (router *Router) CreateHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (router *Router) UpdateHandler(w http.ResponseWriter, r *http.Request) {
+func (router *Resource) UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	uuid, err := uuid.FromString(r.PathValue("id"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -126,13 +127,7 @@ func (router *Router) UpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.UUID != uuid {
-		http.Error(w, "update request body must not contain and UUID field", http.StatusBadRequest)
-		return
-	}
-
-	_, err = router.Repo.Update(&req)
-	if err != nil {
+	if err := router.Repo.Update(nil, &req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -140,7 +135,7 @@ func (router *Router) UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (router *Router) PatchHandler(w http.ResponseWriter, r *http.Request) {
+func (router *Resource) PatchHandler(w http.ResponseWriter, r *http.Request) {
 	uuid, err := uuid.FromString(r.PathValue("id"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -161,13 +156,7 @@ func (router *Router) PatchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.UUID != uuid {
-		http.Error(w, "patch request body must not contain and UUID field", http.StatusBadRequest)
-		return
-	}
-
-	_, err = router.Repo.Patch(&req)
-	if err != nil {
+	if err = router.Repo.Patch(nil, &req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -175,7 +164,7 @@ func (router *Router) PatchHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (router *Router) DeleteHandler(w http.ResponseWriter, r *http.Request) {
+func (router *Resource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	uuid, err := uuid.FromString(r.PathValue("id"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -184,8 +173,7 @@ func (router *Router) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	req := DeleteRequest{UUID: uuid}
 
-	_, err = router.Repo.Delete(&req)
-	if err != nil {
+	if err := router.Repo.Delete(nil, &req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

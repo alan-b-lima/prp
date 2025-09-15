@@ -10,7 +10,10 @@ type Repository struct {
 	repo map[uuid.UUID]User
 }
 
-var ErrUserNotFound = errors.New("user not found")
+var (
+	ErrUserNotFound       = errors.New("user(repo): not found")
+	ErrLoginAlreadyExists = errors.New("user(repo): login already in use")
+)
 
 func NewRepository() Repository {
 	repo := Repository{repo: make(map[uuid.UUID]User)}
@@ -27,54 +30,50 @@ func NewRepository() Repository {
 	return repo
 }
 
-func (r *Repository) GetAll(req *GetAllRequest) (GetAllResponse, error) {
+func (r *Repository) GetAll(res *GetAllResponse, req *GetAllRequest) error {
 	if len(r.repo) == 0 {
-		return GetAllResponse{}, nil
+		*res = nil
+		return nil
 	}
 
-	res := GetAllResponse(make([]GetResponse, 0, len(r.repo)))
+	*res = make(GetAllResponse, len(r.repo))
+	
+	var i int
 	for _, user := range r.repo {
-		res = append(res, respond_user(&user))
+		transform(&(*res)[i], &user)
+		i++
 	}
 
-	return res, nil
+	return nil
 }
 
-func (r *Repository) Get(req *GetRequest) (GetResponse, error) {
+func (r *Repository) Get(res *GetResponse, req *GetRequest) error {
 	user, in := r.repo[req.UUID]
 	if !in {
-		return GetResponse{}, ErrUserNotFound
+		return ErrUserNotFound
 	}
 
-	return respond_user(&user), nil
+	transform(res, &user)
+	return nil
 }
 
-func respond_user(user *User) GetResponse {
-	return GetResponse{
-		UUID:  user.UUID(),
-		Name:  user.Name(),
-		Login: user.Login(),
-	}
-}
-
-func (r *Repository) Create(req *CreateRequest) (CreateResponse, error) {
+func (r *Repository) Create(res *CreateResponse, req *CreateRequest) error {
 	user, err := NewUser(&UserScrath{
 		Name:     req.Name,
 		Login:    req.Login,
 		Password: req.Password,
 	})
 	if err != nil {
-		return CreateResponse{}, err
+		return err
 	}
 
-	r.repo[user.UUID()] = *user
-	return CreateResponse{}, nil
+	return insert(r, user)
 }
 
-func (r *Repository) Update(req *UpdateRequest) (UpdateResponse, error) {
+func (r *Repository) Update(res *UpdateResponse, req *UpdateRequest) error {
 	user, in := r.repo[req.UUID]
 	if !in {
-		return UpdateResponse{}, ErrUserNotFound
+		return ErrUserNotFound
 	}
 
 	err := errors.Join(
@@ -83,17 +82,16 @@ func (r *Repository) Update(req *UpdateRequest) (UpdateResponse, error) {
 		user.SetPassword(req.Password),
 	)
 	if err != nil {
-		return UpdateResponse{}, err
+		return err
 	}
 
-	r.repo[req.UUID] = user
-	return UpdateResponse{}, nil
+	return insert(r, &user)
 }
 
-func (r *Repository) Patch(req *PatchRequest) (PatchResponse, error) {
+func (r *Repository) Patch(res *PatchResponse, req *PatchRequest) error {
 	user, in := r.repo[req.UUID]
 	if !in {
-		return PatchResponse{}, ErrUserNotFound
+		return ErrUserNotFound
 	}
 
 	err := errors.Join(
@@ -102,11 +100,36 @@ func (r *Repository) Patch(req *PatchRequest) (PatchResponse, error) {
 		non_nil_then(req.Password, user.SetPassword),
 	)
 	if err != nil {
-		return PatchResponse{}, err
+		return err
 	}
 
-	r.repo[req.UUID] = user
-	return PatchResponse{}, nil
+	return insert(r, &user)
+}
+
+func (r *Repository) Delete(res *DeleteResponse, req *DeleteRequest) error {
+	delete(r.repo, req.UUID)
+	return nil
+}
+
+func transform(res *GetResponse, user *User) {
+	res.UUID = user.UUID()
+	res.Name = user.Name()
+	res.Login = user.Login()
+}
+
+func insert(r *Repository, user *User) error {
+	for _, u := range r.repo {
+		if user.Login() == u.Login() {
+			if user.UUID() == u.UUID() {
+				continue
+			}
+
+			return ErrLoginAlreadyExists
+		}
+	}
+
+	r.repo[user.UUID()] = *user
+	return nil
 }
 
 func non_nil_then[R any](ptr *R, fn func(R) error) error {
@@ -115,9 +138,4 @@ func non_nil_then[R any](ptr *R, fn func(R) error) error {
 	}
 
 	return nil
-}
-
-func (r *Repository) Delete(req *DeleteRequest) (DeleteResponse, error) {
-	delete(r.repo, req.UUID)
-	return DeleteResponse{}, nil
 }
