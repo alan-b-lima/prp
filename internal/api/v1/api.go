@@ -6,13 +6,18 @@ import (
 	"github.com/alan-b-lima/prp/internal/domain/user"
 )
 
-func NewAPIMux() http.Handler {
-	mux := http.NewServeMux()
+type APIMux struct{ *http.ServeMux }
+
+func NewAPIMux() APIMux {
+	mux := APIMux{http.NewServeMux()}
 
 	repo := user.NewRepository()
-	router := user.NewResource(&repo)
+	router := user.NewResource(repo)
 
-	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", &router))
+	mux.HandleFunc("/api/v1/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		http.StripPrefix("/api/v1", &router).ServeHTTP(w, r)
+	})
 
 	return mux
 }

@@ -11,10 +11,19 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/alan-b-lima/ansi-escape-sequences"
+	vterm "github.com/alan-b-lima/ansi-escape-sequences/vterminal"
+
 	"github.com/alan-b-lima/prp/internal/api/v1"
 )
 
 func main() {
+	if err := vterm.EnableVirtualTerminal(os.Stdout.Fd()); err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer vterm.DisableVirtualTerminal(os.Stdout.Fd())
+
 	addr := ":8080"
 	if len(os.Args) >= 2 {
 		addr = os.Args[1]
@@ -30,7 +39,12 @@ func main() {
 	EnableSignalTermination(&srv)
 
 	addr = strings.Replace(ln.Addr().String(), "[::]", "localhost", 1)
-	fmt.Printf("Server listening at \033[38;2;23;135;244m%s\033[m\n", HyperLink("http://"+addr))
+	fmt.Printf("Server listening at %s%s%s\n",
+		ansi.FGColor(ansi.RGB{23, 135, 244}),
+		ansi.HyperLinkP("http://"+addr),
+		ansi.Reset(),
+	)
+
 	if err := srv.Serve(ln); err != nil && err != http.ErrServerClosed {
 		fmt.Println(err)
 		return
@@ -53,10 +67,6 @@ func LoggingMiddleware(h http.Handler) http.Handler {
 		h.ServeHTTP(resw, r)
 		Log(resw.status, r)
 	})
-}
-
-func HyperLink(link string) string {
-	return fmt.Sprintf("\033]8;;%s\033\\%s\033]8;;\033\\", link, link)
 }
 
 func EnableSignalTermination(srv *http.Server) {
@@ -90,22 +100,34 @@ func EnableSignalTermination(srv *http.Server) {
 }
 
 func Log(status int, r *http.Request) {
+	var pen ansi.Pen
+
 	switch {
 	case 500 <= status && status <= 599:
-		log.Printf("\033[38;2;235;193;193;48;2;219;9;9m %03d \033[m %s %s %s", status, get_client_ip(r), r.Method, r.URL)
+		pen.BGColor(ansi.RGB{219, 9, 9})
+		pen.FGColor(ansi.RGB{235, 193, 193})
 
 	case 400 <= status && status <= 499:
-		log.Printf("\033[38;2;235;235;235;48;2;219;9;9m %03d \033[m %s %s %s", status, get_client_ip(r), r.Method, r.URL)
+		pen.BGColor(ansi.RGB{219, 9, 9})
+		pen.FGColor(ansi.RGB{235, 235, 235})
 
 	case 300 <= status && status <= 399:
-		log.Printf("\033[38;2;235;235;235;48;2;59;143;222m %03d \033[m %s %s %s", status, get_client_ip(r), r.Method, r.URL)
+		pen.BGColor(ansi.RGB{59, 143, 222})
+		pen.FGColor(ansi.RGB{235, 235, 235})
 
 	case 200 <= status && status <= 299:
-		log.Printf("\033[38;2;235;235;235;48;2;59;203;91m %03d \033[m %s %s %s", status, get_client_ip(r), r.Method, r.URL)
+		pen.BGColor(ansi.RGB{59, 203, 91})
+		pen.FGColor(ansi.RGB{235, 235, 235})
 
 	default:
-		log.Printf("\033[38;2;0;0;0;48;2;225;225;225m %03d \033[m %s %s %s", status, get_client_ip(r), r.Method, r.URL)
+		pen.BGColor(ansi.RGB{255, 255, 255})
+		pen.FGColor(ansi.RGB{0, 0, 0})
 	}
+
+	log.Printf("%s %03d %s %s %s %s",
+		pen.Style(), status, ansi.Reset(),
+		get_client_ip(r), r.Method, r.URL,
+	)
 }
 
 func get_client_ip(r *http.Request) string {

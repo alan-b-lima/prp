@@ -9,11 +9,11 @@ import (
 )
 
 type Resource struct {
-	Repo *Repository
+	Repo Repository
 	mux  *http.ServeMux
 }
 
-func NewResource(repo *Repository) Resource {
+func NewResource(repo Repository) Resource {
 	router := Resource{
 		Repo: repo,
 		mux:  http.NewServeMux(),

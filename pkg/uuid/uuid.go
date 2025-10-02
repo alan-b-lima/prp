@@ -143,9 +143,9 @@ func FromString(str string) (UUID, error) {
 	return uuid, nil
 }
 
-// Verifies whether the given UUID is the Nil UUID. Not to be
-// confused with a nil pointer to an UUID. Equivalent to using ==
-// against the zero value of this type.
+// Verifies whether the given UUID is the Nil UUID. Not be confused
+// with a nil pointer to an UUID. Equivalent to using == against the
+// zero value of this type.
 func (uuid UUID) IsNil() bool {
 	return uuid == UUID{}
 }
@@ -163,13 +163,13 @@ func (uuid UUID) String() string {
 
 // Implements the interface [json.Marshaler] on the UUID type.
 func (uuid UUID) MarshalJSON() ([]byte, error) {
-	return fmt.Appendf(nil, `"%s"`, uuid.String()), nil
+	return []byte(`"` + uuid.String() + `"`), nil
 }
 
 // Implements the interface [json.Unmarshaler] on the UUID type. The
-// given byte slice MUST be a valid JSON string literal.
+// given byte slice should be a valid JSON string literal.
 func (uuid *UUID) UnmarshalJSON(buf []byte) error {
-	if len(buf) >= 2 || buf[0] != '"' || buf[len(buf)-1] != '"' {
+	if len(buf) >= 2 && (buf[0] != '"' || buf[len(buf)-1] != '"') {
 		return ErrBadJSONUUIDString
 	}
 

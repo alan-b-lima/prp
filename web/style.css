@@ -1,0 +1,7 @@
+:root {
+    --text:       light-dark(oklch(22.15% 0.041 241.43), oklch(92.24% 0.031 237.56));
+    --background: light-dark(oklch(99.09% 0.003 264.54), oklch(8.37% 0.012 255.89));
+    --primary:    light-dark(oklch(71.24% 0.119 63.76),  oklch(60.15% 0.120 61.47));
+    --secondary:  light-dark(oklch(98.43% 0.014 78.26),  oklch(14.41% 0.029 88.06));
+    --accent:     light-dark(oklch(62.09% 0.082 74.20),  oklch(67.19% 0.082 75.80));
+}
