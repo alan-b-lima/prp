@@ -1,10 +1,3 @@
-// Copyright (C) 2025 Alan Barbosa Lima.
-//
-// PRP is licensed under the GNU General Public License
-// version 3. You should have received a copy of the
-// license, located in LICENSE, at the root of the source
-// tree. If not, see <https://www.gnu.org/licenses/>.
-
 package uuid_test
 
 import (

@@ -1,5 +1,5 @@
 // Copyright (C) 2025 Alan Barbosa Lima.
-// 
+//
 // PRP is licensed under the GNU General Public License
 // version 3. You should have received a copy of the
 // license, located in LICENSE, at the root of the source
@@ -11,11 +11,13 @@
 package uuid
 
 import (
+	crand "crypto/rand"
 	"errors"
 	"fmt"
 	"math/rand/v2"
 	"sync"
 	"time"
+	"unsafe"
 )
 
 // This represents a 128bit UUID type. Elements of this type can, and
@@ -35,10 +37,10 @@ var (
 )
 
 func init() {
-	lo := uint64(time.Now().UnixNano())
-	hi := lo * 0xCAFE_D0CE
-
-	source = rand.NewPCG(lo, hi)
+	var seed [2]uint64
+	crand.Read(unsafe.Slice((*byte)(unsafe.Pointer(&seed)), 16))
+	
+	source = rand.NewPCG(seed[0], seed[1])
 }
 
 var (
