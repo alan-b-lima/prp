@@ -39,14 +39,14 @@ var (
 func init() {
 	var seed [2]uint64
 	crand.Read(unsafe.Slice((*byte)(unsafe.Pointer(&seed)), 16))
-	
+
 	source = rand.NewPCG(seed[0], seed[1])
 }
 
 var (
-	ErrBadSliceLength    = errors.New("uuid: slice does not has 16 bytes")
-	ErrBadUUIDString     = errors.New("uuid: string could not be parsed correctly")
-	ErrBadJSONUUIDString = errors.New("uuid: slice is a malformed JSON string")
+	ErrBadSliceLength = errors.New("uuid: slice does not has 16 bytes")
+	ErrBadString      = errors.New("uuid: string could not be parsed correctly")
+	ErrBadJSONString  = errors.New("uuid: slice is a malformed JSON string")
 )
 
 var _UUIDFormat = "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x"
@@ -100,9 +100,11 @@ func NewUUIDv7() UUID {
 	}
 }
 
-// Converts an UUID from a byte slice. Note that this function is NOT
-// interchangeable with [FromString], even considering convertion,
-// because this does NOT look into formatting.
+// Converts an UUID from a byte slice. The given byte slice should be
+// of length 16, otherwise an error will be returned. Due to this,
+// this function is NOT interchangeable with [FromString], a byte
+// slice that represents the string representation of an UUID should
+// be converted with [FromString].
 func FromBytes(bytes []byte) (UUID, error) {
 	if len(bytes) != 16 {
 		return UUID{}, ErrBadSliceLength
@@ -115,7 +117,7 @@ func FromBytes(bytes []byte) (UUID, error) {
 // NOT interchangeable with [FromBytes], even considering convertion.
 func FromString(str string) (UUID, error) {
 	if len(str) != 36 {
-		return UUID{}, ErrBadUUIDString
+		return UUID{}, ErrBadString
 	}
 
 	var uuid UUID
@@ -130,7 +132,7 @@ func FromString(str string) (UUID, error) {
 		return UUID{}, err
 	}
 	if n != 16 {
-		return UUID{}, ErrBadUUIDString
+		return UUID{}, ErrBadString
 	}
 
 	return uuid, nil
@@ -163,7 +165,7 @@ func (uuid UUID) MarshalJSON() ([]byte, error) {
 // given byte slice should be a valid JSON string literal.
 func (uuid *UUID) UnmarshalJSON(buf []byte) error {
 	if len(buf) >= 2 && (buf[0] != '"' || buf[len(buf)-1] != '"') {
-		return ErrBadJSONUUIDString
+		return ErrBadJSONString
 	}
 
 	decoded, err := FromString(string(buf[1 : len(buf)-1]))
