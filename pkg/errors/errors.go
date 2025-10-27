@@ -2,7 +2,6 @@ package errors
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 )
@@ -24,7 +23,11 @@ func New(kind Kind, message string, cause error, metadata map[string]any) error 
 }
 
 func (err *Error) Error() string {
-	return err.Message + `: ` + err.Cause.Error()
+	if err.Cause != nil {
+		return err.Message + `: ` + err.Cause.Error()
+	}
+
+	return err.Message
 }
 
 func (err *Error) Unwrap() error {
@@ -37,6 +40,9 @@ func (err Error) MarshalJSON() ([]byte, error) {
 
 	if efj.Metadata == nil {
 		efj.Metadata = map[string]any{}
+	}
+	if efj.Cause != nil {
+		efj.Cause = &wrapped{efj.Cause}
 	}
 
 	return json.Marshal(efj)
@@ -55,16 +61,23 @@ func (err *Error) UnmarshalJSON(buf []byte) error {
 type Kind int
 
 const (
-	InvalidInput Kind = iota
+	client_errors_start Kind = iota
+
+	InvalidInput
 	Unauthorized
 	PreconditionFailed
 	NotFound
 	Conflict
 
+	client_errors_end
+	internal_errors_start
+
 	Internal
 	Unavailable
 	Timeout
 	BadGateway
+
+	internal_errors_end
 )
 
 var kindStrings = map[Kind]string{
@@ -81,6 +94,10 @@ var kindStrings = map[Kind]string{
 }
 
 var stringKinds = invert(kindStrings)
+
+func (k Kind) IsClient() bool {
+	return client_errors_start < k && k < client_errors_end
+}
 
 func (k Kind) String() string {
 	return kindStrings[k]
@@ -99,10 +116,6 @@ func (k *Kind) UnmarshalJSON(buf []byte) error {
 
 	*k = stringKinds[unquoted]
 	return nil
-}
-
-func Join(errs ...error) error {
-	return errors.Join(errs...)
 }
 
 type errorForJSON struct {
