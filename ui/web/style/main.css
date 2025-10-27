@@ -11,6 +11,7 @@
     box-sizing: border-box;
 
     scroll-behavior: smooth;
+    transition: background-color var(--transition-speed);
 }
 
 :root {
@@ -61,6 +62,8 @@
     --radius: 1rem;
     --radius-large: 10rem;
 
+    --transition-speed: 150ms;
+
     --color-scrollbar: var(--color-neutral);
     --color-scrollbar-hover: var(--color-light);
 }
@@ -93,6 +96,12 @@ html {
     }
 }
 
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --transition-speed: 0;
+    }
+}
+
 body {
     min-height: 100dvh;
 }
@@ -115,7 +124,7 @@ body {
         width: 100%;
         z-index: -1;
         bottom: calc(var(--scale, 1) * .25rem);
-        transition: height 200ms;
+        transition: height var(--transition-speed);
     }
 
     &:hover::before {
@@ -135,7 +144,7 @@ body {
             border: var(--no-border);
             background-color: var(--color-background-button-primary);
             color: var(--color-foreground-button-primary);
-            transition: border 150ms, background-color 150ms;
+            transition: border var(--transition-speed), background-color var(--transition-speed);
         }
 
         &:hover {
@@ -152,7 +161,7 @@ body {
             border: var(--border);
             background-color: var(--color-background);
             color: var(--color-foreground);
-            transition: background-color 150ms;
+            transition: background-color var(--transition-speed);
         }
 
         &:hover {
@@ -344,6 +353,7 @@ body {
                             border: var(--border);
                             border-radius: 100%;
                             align-self: center;
+                            object-fit: cover;
                             height: 8rem;
                         }
 
@@ -417,7 +427,7 @@ body {
                             border: var(--no-border);
                             align-items: center;
                             padding: 1rem 4rem 1rem 2rem;
-                            transition: 100ms;
+                            transition: var(--transition-speed);
                             gap: 1rem;
                         }
 
@@ -543,7 +553,7 @@ body {
                         border-radius: var(--radius);
                         text-decoration: none;
                         align-items: center;
-                        transition: box-shadow 150ms;
+                        transition: box-shadow var(--transition-speed);
                         padding: 1rem 2rem 1rem 1rem;
                         gap: .25rem 1rem;
                     }
