@@ -33,13 +33,13 @@ const _JSONNull = `null`
 
 var _JSONNullBytes = []byte(_JSONNull)
 
-// New creates a new Opt value with a value.
-func New[T any](val T) Opt[T] {
+// Some creates a new Opt value with a value.
+func Some[T any](val T) Opt[T] {
 	return Opt[T]{val, true}
 }
 
-// NewNone creates a new Opt value with no value, ie, None.
-func NewNone[T any](val T) Opt[T] {
+// None creates a new Opt value with no value, ie, None.
+func None[T any](val T) Opt[T] {
 	return Opt[T]{}
 }
 
