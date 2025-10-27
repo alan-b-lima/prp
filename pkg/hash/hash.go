@@ -27,7 +27,7 @@ import (
 // 72-byte chuncks. This introduces chance for matching a passwords
 // in simplitic manner, because XOR is trivially reversible.
 func Hash(password []byte) ([60]byte, error) {
-	ingest := _ToAtMax72Bytes(password)
+	ingest := atMax72Bytes(password)
 
 	digest, err := bcrypt.GenerateFromPassword(ingest, bcrypt.DefaultCost)
 	if err != nil {
@@ -43,18 +43,20 @@ func Hash(password []byte) ([60]byte, error) {
 // Compares a hash generated through [Hash] with a password, it
 // returns true for a match, and false for not a match or an error.
 func Compare(hash, password []byte) bool {
-	err := bcrypt.CompareHashAndPassword(hash, _ToAtMax72Bytes(password))
+	err := bcrypt.CompareHashAndPassword(hash, atMax72Bytes(password))
 	return err == nil
 }
 
-func _ToAtMax72Bytes(data []byte) []byte {
+func atMax72Bytes(data []byte) []byte {
 	const size = 72
-	result := make([]byte, size)
 
-	if len(data) > size {
-		for i, d := range data {
-			result[i%size] ^= d
-		}
+	if len(data) <= size {
+		return data
+	}
+
+	result := make([]byte, size)
+	for i, d := range data {
+		result[i%size] ^= d
 	}
 
 	return result
