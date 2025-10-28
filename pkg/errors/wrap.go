@@ -28,16 +28,19 @@ func (e *wrapped) Unwrap() error {
 
 func (e wrapped) MarshalJSON() ([]byte, error) {
 	switch err := e.error.(type) {
+	case *Multi:
+		errs := make([]wrapped, 0, len(err.errs))
+		for _, err := range err.errs {
+			errs = append(errs, wrapped{err})
+		}
+
+		return json.Marshal(errs)
+		
 	case json.Marshaler:
 		return err.MarshalJSON()
 
 	case fmt.Stringer:
 		return json.Marshal(err.String())
-
-	case interface{ Unwrap() []error }:
-		joined := Join(err.Unwrap()...)
-		return json.Marshal(joined)
-
 	}
 
 	return json.Marshal(e.Error())

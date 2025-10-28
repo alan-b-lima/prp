@@ -7,18 +7,18 @@ import (
 )
 
 type Error struct {
-	Kind     Kind
-	Message  string
-	Cause    error
-	Metadata map[string]any
+	Kind    Kind
+	Title   string
+	Message string
+	Cause   error
 }
 
-func New(kind Kind, message string, cause error, metadata map[string]any) error {
+func New(kind Kind, title, message string, cause error) error {
 	return &Error{
-		Kind:     kind,
-		Message:  message,
-		Cause:    cause,
-		Metadata: metadata,
+		Kind:    kind,
+		Title:   title,
+		Message: message,
+		Cause:   cause,
 	}
 }
 
@@ -38,9 +38,6 @@ func (err Error) MarshalJSON() ([]byte, error) {
 	var efj errorForJSON
 	efj = errorForJSON(err)
 
-	if efj.Metadata == nil {
-		efj.Metadata = map[string]any{}
-	}
 	if efj.Cause != nil {
 		efj.Cause = &wrapped{efj.Cause}
 	}
@@ -119,10 +116,10 @@ func (k *Kind) UnmarshalJSON(buf []byte) error {
 }
 
 type errorForJSON struct {
-	Kind     Kind           `json:"kind"`
-	Message  string         `json:"message"`
-	Cause    error          `json:"cause,omitempty"`
-	Metadata map[string]any `json:"metadata,omitempty"`
+	Kind    Kind   `json:"kind"`
+	Title   string `json:"title"`
+	Message string `json:"message"`
+	Cause   error  `json:"cause,omitempty"`
 }
 
 func invert[K, V comparable](m map[K]V) map[V]K {
