@@ -39,7 +39,7 @@ func Some[T any](val T) Opt[T] {
 }
 
 // None creates a new Opt value with no value, ie, None.
-func None[T any](val T) Opt[T] {
+func None[T any]() Opt[T] {
 	return Opt[T]{}
 }
 
