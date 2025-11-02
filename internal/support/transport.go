@@ -1,4 +1,4 @@
-package router
+package support
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/alan-b-lima/prp/internal/xerrors"
 	"github.com/alan-b-lima/prp/pkg/errors"
 	uuidpkg "github.com/alan-b-lima/prp/pkg/uuid"
 )
@@ -28,7 +29,7 @@ func LimitAndOffset(offsetStr, limitStr string, offset, limit *int) error {
 	}
 
 	if errs != [2]error{nil, nil} {
-		return ErrBadOffsetOrLimit.New(errors.Join(errs[:]...))
+		return xerrors.ErrBadOffsetOrLimit.New(errors.Join(errs[:]...))
 	}
 
 	return nil
@@ -37,7 +38,7 @@ func LimitAndOffset(offsetStr, limitStr string, offset, limit *int) error {
 func UUIDFromString(uuidStr string) (uuidpkg.UUID, error) {
 	uuid, err := uuidpkg.FromString(uuidStr)
 	if err != nil {
-		return uuidpkg.UUID{}, ErrBadUUID.New(err)
+		return uuidpkg.UUID{}, xerrors.ErrBadUUID.New(err)
 	}
 
 	return uuid, nil
@@ -46,16 +47,16 @@ func UUIDFromString(uuidStr string) (uuidpkg.UUID, error) {
 func DecodeJSON(req any, r *http.Request) error {
 	contentType := r.Header.Get("Content-Type")
 	if contentType == "" {
-		return ErrNoContentType
+		return xerrors.ErrNoContentType
 	}
 
 	if !reContentTypeApplicationJson.MatchString(contentType) {
-		return ErrNoContentType
+		return xerrors. ErrNoContentType
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		if err, ok := err.(*json.SyntaxError); ok {
-			return ErrJsonSyntax.New("JSON syntax error at"+strconv.FormatInt(err.Offset, 10), nil)
+			return xerrors.ErrJsonSyntax.New("JSON syntax error at"+strconv.FormatInt(err.Offset, 10), nil)
 		}
 
 		return err
@@ -67,7 +68,7 @@ func DecodeJSON(req any, r *http.Request) error {
 func EncodeJSON(res any, status int, w http.ResponseWriter, r *http.Request) error {
 	accept := r.Header.Get("Accept")
 	if !reAcceptApplicationJson.MatchString(accept) {
-		return ErrNotAcceptableJson
+		return xerrors.ErrNotAcceptableJson
 	}
 
 	var b bytes.Buffer
