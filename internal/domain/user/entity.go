@@ -3,6 +3,7 @@ package user
 import (
 	"unicode/utf8"
 
+	"github.com/alan-b-lima/prp/internal/xerrors"
 	"github.com/alan-b-lima/prp/pkg/errors"
 	"github.com/alan-b-lima/prp/pkg/hash"
 	"github.com/alan-b-lima/prp/pkg/uuid"
@@ -13,15 +14,17 @@ type User struct {
 	name     string
 	login    string
 	password [60]byte
+	level    int
 }
 
 type Scratch struct {
 	Name     string
 	Login    string
 	Password string
+	Level    int
 }
 
-func NewUser(us *Scratch) (User, error) {
+func New(us *Scratch) (User, error) {
 	user := User{}
 
 	pwderr := user.SetPassword(us.Password)
@@ -35,11 +38,7 @@ func NewUser(us *Scratch) (User, error) {
 		pwderr,
 	)
 	if err != nil {
-		return User{}, errors.New(
-			errors.InvalidInput, "",
-			"given data does not satisfy the user type",
-			err,
-		)
+		return User{}, xerrors.ErrUserCreation.New(err)
 	}
 
 	user.uuid = uuid.NewUUIDv7()
@@ -56,7 +55,7 @@ func (u *User) Name() string {
 
 func (u *User) SetName(name string) error {
 	if name == "" {
-		return ErrNameEmpty
+		return xerrors.ErrNameEmpty
 	}
 
 	u.name = name
@@ -69,47 +68,55 @@ func (u *User) Login() string {
 
 func (u *User) SetLogin(login string) error {
 	if login == "" {
-		return ErrLoginNameEmpty
+		return xerrors.ErrLoginNameEmpty
 	}
 
 	u.login = login
 	return nil
 }
 
+func (u *User) Password() [60]byte {
+	return u.password
+}
+
 func (u *User) SetPassword(password string) error {
 	if len(password) < 8 {
-		return ErrPasswordTooShort
+		return xerrors.ErrPasswordTooShort
 	}
 
 	if len(password) > 64 {
-		return ErrPasswordTooLong
+		return xerrors.ErrPasswordTooLong
 	}
 
 	switch password[0] {
 	case ' ', '\t', '\n', '\r':
-		return ErrPasswordLeadOrTrailWhitespace
+		return xerrors.ErrPasswordLeadOrTrailWhitespace
 	}
 
 	switch password[len(password)-1] {
 	case ' ', '\t', '\n', '\r':
-		return ErrPasswordLeadOrTrailWhitespace
+		return xerrors.ErrPasswordLeadOrTrailWhitespace
 	}
 
 	for _, rune := range password {
 		if rune < ' ' || !utf8.ValidRune(rune) {
-			return ErrPasswordIllegalCharacters
+			return xerrors.ErrPasswordIllegalCharacters
 		}
 	}
 
 	hash, err := hash.Hash([]byte(password))
 	if err != nil {
-		return ErrFailedToHashPassword.New(err)
+		return xerrors.ErrFailedToHashPassword.New(err)
 	}
 
 	u.password = hash
 	return nil
 }
 
-func (u *User) ComparePassword(password string) bool {
-	return hash.Compare(u.password[:], []byte(password))
+var AuthLevel = struct {
+	Admin int
+	User  int
+}{
+	Admin: 0,
+	User:  1,
 }

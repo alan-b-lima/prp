@@ -1,6 +1,8 @@
 package user
 
 import (
+	"time"
+
 	"github.com/alan-b-lima/prp/pkg/opt"
 	"github.com/alan-b-lima/prp/pkg/uuid"
 )
@@ -35,6 +37,11 @@ type (
 	DeleteRequest struct {
 		UUID uuid.UUID `json:"-"`
 	}
+
+	AuthRequest struct {
+		Login    string `json:"login"`
+		Password string `json:"password"`
+	}
 )
 
 type (
@@ -43,6 +50,12 @@ type (
 		Length       int        `json:"length"`
 		Records      []Response `json:"records"`
 		TotalRecords int        `json:"total_records"`
+	}
+
+	AuthResponse struct {
+		UUID    uuid.UUID `json:"uuid"`
+		User    uuid.UUID `json:"user"`
+		Expires time.Time `json:"expires"`
 	}
 
 	Response struct {

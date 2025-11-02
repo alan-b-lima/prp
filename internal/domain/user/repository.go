@@ -1,27 +1,32 @@
 package user
 
+import (
+	"github.com/alan-b-lima/prp/pkg/opt"
+	"github.com/alan-b-lima/prp/pkg/uuid"
+)
+
 type Lister interface {
-	List(*ListRequest) (ListResponse, error)
+	List(offset, limit int) (ListEntity, error)
 }
 
 type Getter interface {
-	Get(*GetRequest) (Response, error)
+	Get(uuid uuid.UUID) (Entity, error)
 }
 
 type GetterByLogin interface {
-	GetByLogin(*GetByLoginRequest) (Response, error)
+	GetByLogin(login string) (Entity, error)
 }
 
 type Creater interface {
-	Create(*CreateRequest) (Response, error)
+	Create(name, login, password string) (Entity, error)
 }
 
 type Patcher interface {
-	Patch(*PatchRequest) (Response, error)
+	Patch(uuid uuid.UUID, name, login, password opt.Opt[string]) (Entity, error)
 }
 
 type Deleter interface {
-	Delete(*DeleteRequest) error
+	Delete(uuid uuid.UUID) error
 }
 
 type Repository interface {
@@ -32,3 +37,19 @@ type Repository interface {
 	Patcher
 	Deleter
 }
+
+type (
+	Entity struct {
+		UUID     uuid.UUID
+		Name     string
+		Login    string
+		Password [60]byte
+	}
+
+	ListEntity struct {
+		Offset       int
+		Length       int
+		Records      []Entity
+		TotalRecords int
+	}
+)
