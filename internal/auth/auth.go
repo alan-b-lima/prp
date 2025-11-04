@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"slices"
 )
 
@@ -24,4 +25,8 @@ func (auth *Authorizer) Authorize(level Level) bool {
 	}
 
 	return false
+}
+
+func (auth Authorizer) String() string {
+	return fmt.Sprint(auth.classes)
 }
