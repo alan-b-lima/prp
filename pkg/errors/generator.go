@@ -1,5 +1,7 @@
 package errors
 
+import "fmt"
+
 type gen struct {
 	kind  Kind
 	title string
@@ -29,8 +31,9 @@ type imp struct {
 
 func Imp(kind Kind, title, message string) *imp {
 	return &imp{
-		kind:  kind,
-		title: title,
+		kind:    kind,
+		title:   title,
+		message: message,
 	}
 }
 
@@ -40,5 +43,30 @@ func (gen *imp) New(cause error) error {
 		Title:   gen.title,
 		Message: gen.message,
 		Cause:   cause,
+	}
+}
+
+type fmt_ struct {
+	kind   Kind
+	title  string
+	format string
+}
+
+func Fmt(kind Kind, title, format string) *fmt_ {
+	return &fmt_{
+		kind:   kind,
+		title:  title,
+		format: format,
+	}
+}
+
+func (gen *fmt_) New(v ...any) error {
+	err := fmt.Errorf(gen.format, v...)
+
+	return &Error{
+		Kind:    gen.kind,
+		Title:   gen.title,
+		Message: err.Error(),
+		Cause:   nil,
 	}
 }
