@@ -62,6 +62,7 @@ const (
 
 	InvalidInput
 	Unauthorized
+	Forbidden
 	PreconditionFailed
 	NotFound
 	Conflict
@@ -80,6 +81,7 @@ const (
 var kindStrings = map[Kind]string{
 	InvalidInput:       "invalid input",
 	Unauthorized:       "unauthorized",
+	Forbidden:          "forbidden",
 	PreconditionFailed: "precondition failed",
 	NotFound:           "not found",
 	Conflict:           "conflict",
