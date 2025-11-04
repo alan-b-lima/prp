@@ -44,6 +44,20 @@ func UUIDFromString(uuidStr string) (uuidpkg.UUID, error) {
 	return uuid, nil
 }
 
+func SessionCookie(cookie string, w http.ResponseWriter, r *http.Request) (uuidpkg.UUID, error) {
+	s, err := r.Cookie(cookie)
+	if err != nil {
+		return uuidpkg.UUID{}, xerrors.ErrUnauthenticatedUser
+	}
+
+	uuid, err := UUIDFromString(s.Value)
+	if err != nil {
+		return uuidpkg.UUID{}, xerrors.ErrBadUUID.New(err)
+	}
+
+	return uuid, nil
+}
+
 func DecodeJSON(req any, r *http.Request) error {
 	contentType := r.Header.Get("Content-Type")
 	if contentType == "" {
@@ -51,7 +65,7 @@ func DecodeJSON(req any, r *http.Request) error {
 	}
 
 	if !reContentTypeApplicationJson.MatchString(contentType) {
-		return xerrors. ErrNoContentType
+		return xerrors.ErrNoContentType
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

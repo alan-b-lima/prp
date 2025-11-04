@@ -7,16 +7,13 @@ import (
 	"github.com/alan-b-lima/prp/pkg/errors"
 )
 
-type RouteFunc func(w http.ResponseWriter, r *http.Request) error
-
-func (fn RouteFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	err := fn(w, r)
+func WriteJsonError(w http.ResponseWriter, err error) {
 	if err == nil {
 		return
 	}
 
 	if err, ok := errors.AsType[*errors.Error](err); ok {
-		writeJsonError(w, err, toStatusCode(err.Kind))
+		writeJsonError(w, err, ToHTTPStatus(err.Kind))
 		return
 	}
 
@@ -38,6 +35,7 @@ func writeJsonError(w http.ResponseWriter, err error, status int) {
 var StatusCodes = map[errors.Kind]int{
 	errors.InvalidInput:       http.StatusBadRequest,
 	errors.Unauthorized:       http.StatusUnauthorized,
+	errors.Forbidden:          http.StatusForbidden,
 	errors.PreconditionFailed: http.StatusPreconditionFailed,
 	errors.NotFound:           http.StatusNotFound,
 	errors.Conflict:           http.StatusConflict,
@@ -48,7 +46,7 @@ var StatusCodes = map[errors.Kind]int{
 	errors.BadGateway:  http.StatusBadGateway,
 }
 
-func toStatusCode(kind errors.Kind) int {
+func ToHTTPStatus(kind errors.Kind) int {
 	if status, in := StatusCodes[kind]; in {
 		return status
 	}
