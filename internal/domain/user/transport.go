@@ -42,6 +42,10 @@ type (
 		Login    string `json:"login"`
 		Password string `json:"password"`
 	}
+
+	ContextRequest struct {
+		Session uuid.UUID `json:"-"`
+	}
 )
 
 type (
@@ -62,5 +66,6 @@ type (
 		UUID  uuid.UUID `json:"uuid"`
 		Name  string    `json:"name"`
 		Login string    `json:"login"`
+		Level string    `json:"level"`
 	}
 )

@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"sync"
 
+	"github.com/alan-b-lima/prp/internal/auth"
 	"github.com/alan-b-lima/prp/internal/domain/user"
 	"github.com/alan-b-lima/prp/internal/xerrors"
 	"github.com/alan-b-lima/prp/pkg/errors"
@@ -26,11 +27,11 @@ func NewMap() user.Repository {
 	}
 
 	{
-		repo.Create("Alan Lima", "alan-b-lima", "12345678")
-		repo.Create("Juan Ferreira", "juanzinho_bs", "12345678")
-		repo.Create("Luan Filipe", "lf-carvalho", "12345678")
-		repo.Create("Mateus Oliveira", "mateuzinhodelasoficial2013", "12345678")
-		repo.Create("Vitor Mozer", "vecto", "12345678")
+		repo.Create("Alan Lima", "alan-b-lima", "12345678", auth.Admin)
+		repo.Create("Juan Ferreira", "juanzinho_bs", "12345678", auth.User)
+		repo.Create("Luan Filipe", "lf-carvalho", "12345678", auth.User)
+		repo.Create("Mateus Oliveira", "mateuzinhodelasoficial2013", "12345678", auth.User)
+		repo.Create("Vitor Mozer", "vecto", "12345678", auth.User)
 	}
 
 	return &repo
@@ -88,7 +89,7 @@ func (m *Map) GetByLogin(login string) (user.Entity, error) {
 	return res, nil
 }
 
-func (m *Map) Create(name, login, password string) (user.Entity, error) {
+func (m *Map) Create(name, login, password string, level auth.Level) (user.Entity, error) {
 	defer m.mu.Unlock()
 	m.mu.Lock()
 
@@ -96,6 +97,7 @@ func (m *Map) Create(name, login, password string) (user.Entity, error) {
 		Name:     name,
 		Login:    login,
 		Password: password,
+		Level:    level,
 	})
 	if err != nil {
 		return user.Entity{}, err
@@ -177,6 +179,7 @@ func transform(r *user.Entity, u *user.User) {
 	r.Name = u.Name()
 	r.Login = u.Login()
 	r.Password = u.Password()
+	r.Level = u.Level()
 }
 
 func clamp[T cmp.Ordered](mn, val, mx T) T {

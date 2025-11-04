@@ -3,6 +3,7 @@ package user
 import (
 	"unicode/utf8"
 
+	"github.com/alan-b-lima/prp/internal/auth"
 	"github.com/alan-b-lima/prp/internal/xerrors"
 	"github.com/alan-b-lima/prp/pkg/errors"
 	"github.com/alan-b-lima/prp/pkg/hash"
@@ -14,14 +15,14 @@ type User struct {
 	name     string
 	login    string
 	password [60]byte
-	level    int
+	level    auth.Level
 }
 
 type Scratch struct {
 	Name     string
 	Login    string
 	Password string
-	Level    int
+	Level    auth.Level
 }
 
 func New(us *Scratch) (User, error) {
@@ -36,6 +37,7 @@ func New(us *Scratch) (User, error) {
 		user.SetName(us.Name),
 		user.SetLogin(us.Login),
 		pwderr,
+		user.SetLevel(us.Level),
 	)
 	if err != nil {
 		return User{}, xerrors.ErrUserCreation.New(err)
@@ -113,10 +115,12 @@ func (u *User) SetPassword(password string) error {
 	return nil
 }
 
-var AuthLevel = struct {
-	Admin int
-	User  int
-}{
-	Admin: 0,
-	User:  1,
+func (u *User) Level() auth.Level {
+	return u.level
+}
+
+// TODO: limit to valid levels
+func (u *User) SetLevel(level auth.Level) error {
+	u.level = level
+	return nil
 }

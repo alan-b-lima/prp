@@ -3,6 +3,7 @@ package user
 import (
 	"time"
 
+	"github.com/alan-b-lima/prp/internal/auth"
 	"github.com/alan-b-lima/prp/internal/domain/session"
 	"github.com/alan-b-lima/prp/internal/xerrors"
 	"github.com/alan-b-lima/prp/pkg/hash"
@@ -50,7 +51,7 @@ func GetByLogin(users GetterByLogin, req GetByLoginRequest) (Response, error) {
 }
 
 func Create(users Creater, req CreateRequest) (Response, error) {
-	res, err := users.Create(req.Name, req.Login, req.Password)
+	res, err := users.Create(req.Name, req.Login, req.Password, auth.User)
 	if err != nil {
 		return Response{}, err
 	}
@@ -85,10 +86,7 @@ func Authenticate(users GetterByLogin, sessions session.Creater, req AuthRequest
 		return AuthResponse{}, xerrors.ErrIncorrectPassword
 	}
 
-	s, err := session.Create(sessions, session.CreateRequest{
-		User:   res.UUID,
-		MaxAge: 10 * time.Minute,
-	})
+	s, err := sessions.Create(res.UUID, 10*time.Minute)
 	if err != nil {
 		return AuthResponse{}, err
 	}
@@ -101,8 +99,26 @@ func Authenticate(users GetterByLogin, sessions session.Creater, req AuthRequest
 	return ares, nil
 }
 
+func Context(users Getter, sessions session.Getter, req ContextRequest) (auth.Context, error) {
+	res, err := sessions.Get(req.Session)
+	if err != nil {
+		return auth.NewUnlogged(), err
+	}
+
+	ures, err := users.Get(res.User)
+	if err != nil {
+		return auth.NewUnlogged(), err
+	}
+
+	return auth.NewLogged(
+		ures.UUID,
+		ures.Level,
+	), nil
+}
+
 func transform(r *Response, e *Entity) {
 	r.UUID = e.UUID
 	r.Name = e.Name
 	r.Login = e.Login
+	r.Level = e.Level.String()
 }
