@@ -8,18 +8,14 @@ import (
 type Multi struct{ errs []error }
 
 func Join(errs ...error) error {
-	var n, p int
-	for i, err := range errs {
+	var n int
+	for _, err := range errs {
 		if err != nil {
-			p = i
 			n++
 		}
 	}
 	if n == 0 {
 		return nil
-	}
-	if n == 1 {
-		return errs[p]
 	}
 
 	merr := Multi{errs: make([]error, 0, n)}
