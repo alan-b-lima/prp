@@ -2,7 +2,6 @@ package xerrors
 
 import "github.com/alan-b-lima/prp/pkg/errors"
 
-// support
 var (
 	ErrBadUUID = errors.Imp(errors.InvalidInput, "bad-uuid", "given UUID could not be parsed")
 
@@ -13,13 +12,9 @@ var (
 
 	ErrJsonSyntax        = errors.Gen(errors.InvalidInput, "json-syntax-error")
 	ErrNotAcceptableJson = errors.New(errors.PreconditionFailed, "not-acceptable-type", "client does not accept application/json", nil)
-)
 
-// session
-var ErrSessionNotFound = errors.New(errors.NotFound, "session-not-found", "session not found", nil)
+	ErrSessionNotFound = errors.New(errors.NotFound, "session-not-found", "session not found", nil)
 
-// user
-var (
 	ErrUserCreation = errors.Imp(errors.InvalidInput, "user-creation", "given data does not satisfy the user type")
 
 	ErrNameEmpty                     = errors.New(errors.InvalidInput, "name-empty", "name cannot be empty", nil)
@@ -31,7 +26,9 @@ var (
 
 	ErrIncorrectPassword    = errors.New(errors.Unauthorized, "incorrect-password", "given password is incorrect", nil)
 	ErrFailedToHashPassword = errors.Imp(errors.Internal, "hash-failure", "failed to hash the password")
-	ErrUnauthenticatedUser  = errors.New(errors.Unauthorized, "unauthenticated-user", "user is not logged in", nil)
+
+	ErrUnauthenticatedUser = errors.New(errors.Unauthorized, "unauthenticated-user", "user is not logged in", nil)
+	ErrUnauthorizedUser    = errors.Fmt(errors.Forbidden, "unauthorized-user", "auth level %v does not match any criteria in %v")
 
 	ErrUserNotFound = errors.New(errors.NotFound, "user-not-found", "user not found", nil)
 	ErrLoginTaken   = errors.New(errors.Conflict, "login-in-use", "login already taken", nil)

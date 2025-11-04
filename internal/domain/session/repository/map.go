@@ -34,26 +34,26 @@ func NewMap() session.Repository {
 	return &repo
 }
 
-func (m *Map) Get(uuid uuid.UUID) (session.Response, error) {
+func (m *Map) Get(uuid uuid.UUID) (session.Entity, error) {
 	defer m.mu.RUnlock()
 	m.mu.RLock()
 
 	index, in := m.uuidIndex[uuid]
 	if !in {
-		return session.Response{}, xerrors.ErrSessionNotFound
+		return session.Entity{}, xerrors.ErrSessionNotFound
 	}
 
 	s := m.repo[index]
 	if time.Now().After(s.Expires()) {
-		return session.Response{}, xerrors.ErrSessionNotFound
+		return session.Entity{}, xerrors.ErrSessionNotFound
 	}
 
-	var res session.Response
+	var res session.Entity
 	transform(&res, &m.repo[index])
 	return res, nil
 }
 
-func (m *Map) Create(user uuid.UUID, maxAge time.Duration) (session.Response, error) {
+func (m *Map) Create(user uuid.UUID, maxAge time.Duration) (session.Entity, error) {
 	defer m.mu.Unlock()
 	m.mu.Lock()
 
@@ -64,10 +64,10 @@ func (m *Map) Create(user uuid.UUID, maxAge time.Duration) (session.Response, er
 
 	s, err := session.New(&session.Scratch{
 		User:   user,
-		MaxAge: 1 * time.Minute,
+		MaxAge: maxAge,
 	})
 	if err != nil {
-		return session.Response{}, err
+		return session.Entity{}, err
 	}
 
 	m.uuidIndex[s.UUID()] = len(m.repo)
@@ -76,9 +76,16 @@ func (m *Map) Create(user uuid.UUID, maxAge time.Duration) (session.Response, er
 
 	m.expiresHeap.new <- es{s.UUID(), s.Expires()}
 
-	var res session.Response
+	var res session.Entity
 	transform(&res, &s)
 	return res, nil
+}
+
+func (m *Map) Delete(uuid uuid.UUID) error {
+	defer m.mu.Unlock()
+	m.mu.Lock()
+
+	return m.delete(uuid)
 }
 
 func (m *Map) delete(uuid uuid.UUID) error {
@@ -97,7 +104,7 @@ func (m *Map) delete(uuid uuid.UUID) error {
 	return nil
 }
 
-func transform(r *session.Response, s *session.Session) {
+func transform(r *session.Entity, s *session.Session) {
 	r.UUID = s.UUID()
 	r.User = s.User()
 	r.Expires = s.Expires()
