@@ -1,0 +1,27 @@
+package auth
+
+import (
+	"slices"
+)
+
+type Authorizer struct {
+	classes []Level
+}
+
+func Permission(classes ...Level) Authorizer {
+	return Authorizer{
+		classes: classes,
+	}
+}
+
+func (auth *Authorizer) Authorize(level Level) bool {
+	if slices.Contains(auth.classes, level) {
+		return true
+	}
+
+	if slices.Contains(auth.classes, Unlogged) {
+		return true
+	}
+
+	return false
+}
