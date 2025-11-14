@@ -45,6 +45,7 @@ func (m *Map) Get(uuid uuid.UUID) (session.Entity, error) {
 
 	s := m.repo[index]
 	if time.Now().After(s.Expires()) {
+		m.delete(s.UUID())
 		return session.Entity{}, xerrors.ErrSessionNotFound
 	}
 
@@ -54,7 +55,6 @@ func (m *Map) Get(uuid uuid.UUID) (session.Entity, error) {
 }
 
 func (m *Map) Create(user uuid.UUID, maxAge time.Duration) (session.Entity, error) {
-	defer m.mu.Unlock()
 	m.mu.Lock()
 
 	if index, in := m.userIndex[user]; in {
@@ -62,10 +62,7 @@ func (m *Map) Create(user uuid.UUID, maxAge time.Duration) (session.Entity, erro
 		m.delete(s.UUID())
 	}
 
-	s, err := session.New(&session.Scratch{
-		User:   user,
-		MaxAge: maxAge,
-	})
+	s, err := session.New(user, maxAge)
 	if err != nil {
 		return session.Entity{}, err
 	}
@@ -74,18 +71,14 @@ func (m *Map) Create(user uuid.UUID, maxAge time.Duration) (session.Entity, erro
 	m.userIndex[s.User()] = len(m.repo)
 	m.repo = append(m.repo, s)
 
+	// unlock before channel send to avoid blocking resources
+	m.mu.Unlock()
+
 	m.expiresHeap.new <- es{s.UUID(), s.Expires()}
 
 	var res session.Entity
 	transform(&res, &s)
 	return res, nil
-}
-
-func (m *Map) Delete(uuid uuid.UUID) error {
-	defer m.mu.Unlock()
-	m.mu.Lock()
-
-	return m.delete(uuid)
 }
 
 func (m *Map) delete(uuid uuid.UUID) error {

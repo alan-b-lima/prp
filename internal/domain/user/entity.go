@@ -18,109 +18,102 @@ type User struct {
 	level    auth.Level
 }
 
-type Scratch struct {
-	Name     string
-	Login    string
-	Password string
-	Level    auth.Level
-}
+func New(name, login, password string, level auth.Level) (User, error) {
+	var u User
 
-func New(us *Scratch) (User, error) {
-	user := User{}
-
-	pwderr := user.SetPassword(us.Password)
-	if err, ok := errors.AsType[*errors.Error](pwderr); ok && !err.Kind.IsClient() {
+	errpwd := u.SetPassword(password)
+	if err, ok := errors.AsType[*errors.Error](errpwd); ok && err.IsInternal() {
 		return User{}, err
 	}
 
 	err := errors.Join(
-		user.SetName(us.Name),
-		user.SetLogin(us.Login),
-		pwderr,
-		user.SetLevel(us.Level),
+		u.SetName(name),
+		u.SetLogin(login),
+		errpwd,
+		u.SetLevel(level),
 	)
 	if err != nil {
 		return User{}, xerrors.ErrUserCreation.New(err)
 	}
 
-	user.uuid = uuid.NewUUIDv7()
-	return user, nil
+	u.uuid = uuid.NewUUIDv7()
+	return u, nil
 }
 
-func (u *User) UUID() uuid.UUID {
-	return u.uuid
-}
+func (u *User) UUID() uuid.UUID    { return u.uuid }
+func (u *User) Name() string       { return u.name }
+func (u *User) Login() string      { return u.login }
+func (u *User) Password() [60]byte { return u.password }
+func (u *User) Level() auth.Level  { return u.level }
 
-func (u *User) Name() string {
-	return u.name
-}
+func (u *User) SetName(name string) error         { return set(&u.name, name, ProcessName) }
+func (u *User) SetLogin(login string) error       { return set(&u.login, login, ProcessLogin) }
+func (u *User) SetPassword(password string) error { return set(&u.password, password, ProcessPassword) }
+func (u *User) SetLevel(level auth.Level) error   { return set(&u.level, level, ProcessLevel) }
 
-func (u *User) SetName(name string) error {
+func ProcessName(name string) (string, error) {
 	if name == "" {
-		return xerrors.ErrNameEmpty
+		return "", xerrors.ErrNameEmpty
 	}
 
-	u.name = name
-	return nil
+	return name, nil
 }
 
-func (u *User) Login() string {
-	return u.login
-}
-
-func (u *User) SetLogin(login string) error {
+func ProcessLogin(login string) (string, error) {
 	if login == "" {
-		return xerrors.ErrLoginNameEmpty
+		return "", xerrors.ErrLoginNameEmpty
 	}
 
-	u.login = login
-	return nil
+	return login, nil
 }
 
-func (u *User) Password() [60]byte {
-	return u.password
-}
-
-func (u *User) SetPassword(password string) error {
+func ProcessPassword(password string) ([60]byte, error) {
 	if len(password) < 8 {
-		return xerrors.ErrPasswordTooShort
+		return [60]byte{}, xerrors.ErrPasswordTooShort
 	}
 
 	if len(password) > 64 {
-		return xerrors.ErrPasswordTooLong
+		return [60]byte{}, xerrors.ErrPasswordTooLong
 	}
 
 	switch password[0] {
 	case ' ', '\t', '\n', '\r':
-		return xerrors.ErrPasswordLeadOrTrailWhitespace
+		return [60]byte{}, xerrors.ErrPasswordLeadOrTrailWhitespace
 	}
 
 	switch password[len(password)-1] {
 	case ' ', '\t', '\n', '\r':
-		return xerrors.ErrPasswordLeadOrTrailWhitespace
+		return [60]byte{}, xerrors.ErrPasswordLeadOrTrailWhitespace
 	}
 
 	for _, rune := range password {
 		if rune < ' ' || !utf8.ValidRune(rune) {
-			return xerrors.ErrPasswordIllegalCharacters
+			return [60]byte{}, xerrors.ErrPasswordIllegalCharacters
 		}
 	}
 
 	hash, err := hash.Hash([]byte(password))
 	if err != nil {
-		return xerrors.ErrFailedToHashPassword.New(err)
+		return [60]byte{}, xerrors.ErrFailedToHashPassword.New(err)
 	}
 
-	u.password = hash
-	return nil
+	return hash, nil
 }
 
-func (u *User) Level() auth.Level {
-	return u.level
+func ProcessLevel(level auth.Level) (auth.Level, error) {
+	if !level.IsValid() {
+		return 0, nil
+	}
+
+	return level, nil
 }
 
-// TODO: limit to valid levels
-func (u *User) SetLevel(level auth.Level) error {
-	u.level = level
+func set[T, R any](dst *R, src T, fn func(T) (R, error)) error {
+	val, err := fn(src)
+	if err != nil {
+		return err
+	}
+
+	*dst = val
 	return nil
 }

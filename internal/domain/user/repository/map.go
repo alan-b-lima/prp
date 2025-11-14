@@ -93,12 +93,7 @@ func (m *Map) Create(name, login, password string, level auth.Level) (user.Entit
 	defer m.mu.Unlock()
 	m.mu.Lock()
 
-	u, err := user.New(&user.Scratch{
-		Name:     name,
-		Login:    login,
-		Password: password,
-		Level:    level,
-	})
+	u, err := user.New(name, login, password, level)
 	if err != nil {
 		return user.Entity{}, err
 	}
@@ -167,11 +162,12 @@ func (m *Map) Delete(uuid uuid.UUID) error {
 	return nil
 }
 
-func some_then[F any](val opt.Opt[F], fn func(F) error) error {
-	if val.Some {
-		return fn(val.Val)
+func some_then[T any](src opt.Opt[T], fn func(T) error) error {
+	if !src.Some {
+		return nil
 	}
-	return nil
+
+	return fn(src.Val)
 }
 
 func transform(r *user.Entity, u *user.User) {
