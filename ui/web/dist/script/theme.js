@@ -38,3 +38,4 @@ function listener_theme(element) {
     element.textContent = THEME_TEXT[theme];
     localStorage.setItem("theme", theme);
 }
+//# sourceMappingURL=theme.js.map

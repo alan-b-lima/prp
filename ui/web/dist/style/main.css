@@ -459,50 +459,36 @@ body {
             .content {
                 & {
                     display: grid;
-                    grid-template-areas:
-                        "a b c"
-                        "d d c"
-                        "d d e"
-                        "f f f";
-                    grid-template-columns: repeat(3, auto);
-                    grid-template-rows: repeat(4, 150px);
                     gap: 2rem;
                 }
 
-                div {
+                .user {
                     & {
+                        display: grid;
+                        grid-template-areas:
+                            "name"
+                            "login"
+                            "uuid";
                         border: var(--border);
                         border-radius: var(--radius);
+                        padding: 2rem;
+                        gap: .25rem;
                     }
 
-                    &:nth-child(1) {
-                        background-color: var(--color-accent);
-                        grid-area: a;
+                    &>:nth-child(1) {
+                        grid-area: uuid;
+                        font-size: var(--font-size-small);
+                        color: var(--color-light);
                     }
 
-                    &:nth-child(2) {
-                        background-color: var(--color-intense);
-                        grid-area: b;
+                    &>:nth-child(2) {
+                        grid-area: name;
+                        font-size: var(--font-size-larger);
+                        padding-bottom: .5rem;
                     }
 
-                    &:nth-child(3) {
-                        background-color: var(--color-secondary);
-                        grid-area: c;
-                    }
-
-                    &:nth-child(4) {
-                        background-color: var(--color-primary);
-                        grid-area: d;
-                    }
-
-                    &:nth-child(5) {
-                        background-color: var(--color-accent);
-                        grid-area: e;
-                    }
-
-                    &:nth-child(6) {
-                        background-color: var(--color-secondary);
-                        grid-area: f;
+                    &>:nth-child(3) {
+                        grid-area: login;
                     }
                 }
             }
@@ -642,21 +628,6 @@ body {
                         }
                     }
                 }
-
-                .content {
-                    & {
-                        grid-template-areas:
-                            "a c"
-                            "b c"
-                            "d d"
-                            "d d"
-                            "f f"
-                            "e .";
-                        grid-template-columns: repeat(2, auto);
-                        grid-template-rows: repeat(6, 150px);
-                    }
-                }
-
             }
 
             .footer .info .repository {
