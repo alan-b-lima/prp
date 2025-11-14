@@ -3,7 +3,13 @@ export class MockUserGateway implements user.Gateway {
     #actor: user.Response | null
 
     constructor() {
-        this.#users = []
+        const users = sessionStorage.getItem("users")
+        if (users !== null) {
+            this.#users = JSON.parse(users)
+        } else {
+            this.#users = []
+        }
+
         this.#actor = null
     }
 
@@ -41,6 +47,11 @@ export class MockUserGateway implements user.Gateway {
     }
 
     async Create(req: user.CreateRequest): PromiseResult<user.Response> {
+        const resp_get = await this.GetByLogin({ login: req.login })
+        if (!(resp_get instanceof Error)) {
+            return new Error("user found")
+        }
+
         const resp: user.Response = {
             uuid: crypto.randomUUID(),
             name: req.name,
@@ -49,6 +60,7 @@ export class MockUserGateway implements user.Gateway {
         }
 
         this.#users.push(resp)
+        sessionStorage.setItem("users", JSON.stringify(this.#users))
         return resp
     }
 
@@ -61,6 +73,7 @@ export class MockUserGateway implements user.Gateway {
         if (req.name !== undefined) { resp.name = req.name }
         if (req.login !== undefined) { resp.login = req.login }
 
+        sessionStorage.setItem("users", JSON.stringify(this.#users))
         return resp
     }
 
@@ -73,6 +86,7 @@ export class MockUserGateway implements user.Gateway {
             this.#users = [...this.#users.slice(0, i), ...this.#users.slice(i + 1)]
         }
 
+        sessionStorage.setItem("users", JSON.stringify(this.#users))
         return new Error("user not found")
     }
 

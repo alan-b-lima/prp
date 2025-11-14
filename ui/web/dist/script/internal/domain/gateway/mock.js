@@ -2,7 +2,13 @@ export class MockUserGateway {
     #users;
     #actor;
     constructor() {
-        this.#users = [];
+        const users = sessionStorage.getItem("users");
+        if (users !== null) {
+            this.#users = JSON.parse(users);
+        }
+        else {
+            this.#users = [];
+        }
         this.#actor = null;
     }
     async List(req) {
@@ -32,6 +38,10 @@ export class MockUserGateway {
         return new Error("user not found");
     }
     async Create(req) {
+        const resp_get = await this.GetByLogin({ login: req.login });
+        if (!(resp_get instanceof Error)) {
+            return new Error("user found");
+        }
         const resp = {
             uuid: crypto.randomUUID(),
             name: req.name,
@@ -39,6 +49,7 @@ export class MockUserGateway {
             level: "user",
         };
         this.#users.push(resp);
+        sessionStorage.setItem("users", JSON.stringify(this.#users));
         return resp;
     }
     async Patch(req) {
@@ -52,6 +63,7 @@ export class MockUserGateway {
         if (req.login !== undefined) {
             resp.login = req.login;
         }
+        sessionStorage.setItem("users", JSON.stringify(this.#users));
         return resp;
     }
     async Delete(req) {
@@ -61,6 +73,7 @@ export class MockUserGateway {
             }
             this.#users = [...this.#users.slice(0, i), ...this.#users.slice(i + 1)];
         }
+        sessionStorage.setItem("users", JSON.stringify(this.#users));
         return new Error("user not found");
     }
     async Authenticate(req) {

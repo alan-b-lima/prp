@@ -7,6 +7,7 @@ async function main(): Promise<void> {
 
     if (location.pathname.endsWith("static.html")) {
         const api = new MockUserGateway()
+        console.log(api)
 
         await CreateUsers(api)
         await Users(api)
@@ -29,7 +30,6 @@ async function Users(api: user.Gateway) {
     }
 
     for (const user of resp.records) {
-        console.log(user)
         content.append(UserComponent(user))
     }
 }
