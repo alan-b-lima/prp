@@ -25,6 +25,3 @@ type Entity struct {
 	Expires time.Time
 }
 
-func (e Entity) MarshalJSON() ([]byte, error) {
-	panic("remember me")
-}

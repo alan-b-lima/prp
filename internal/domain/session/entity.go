@@ -13,17 +13,12 @@ type Session struct {
 	expires time.Time
 }
 
-type Scratch struct {
-	User   uuid.UUID
-	MaxAge time.Duration
-}
-
-func New(ss *Scratch) (Session, error) {
+func New(user uuid.UUID, maxAge time.Duration) (Session, error) {
 	session := Session{}
 
 	err := errors.Join(
-		session.setUser(ss.User),
-		session.setMaxAge(ss.MaxAge),
+		session.setUser(user),
+		session.setMaxAge(maxAge),
 	)
 	if err != nil {
 		return Session{}, err
@@ -33,21 +28,13 @@ func New(ss *Scratch) (Session, error) {
 	return session, nil
 }
 
-func (s *Session) UUID() uuid.UUID {
-	return s.uuid
-}
-
-func (s *Session) User() uuid.UUID {
-	return s.user
-}
+func (s *Session) UUID() uuid.UUID    { return s.uuid }
+func (s *Session) User() uuid.UUID    { return s.user }
+func (s *Session) Expires() time.Time { return s.expires }
 
 func (s *Session) setUser(uuid uuid.UUID) error {
 	s.user = uuid
 	return nil
-}
-
-func (s *Session) Expires() time.Time {
-	return s.expires
 }
 
 func (s *Session) setMaxAge(maxAge time.Duration) error {
