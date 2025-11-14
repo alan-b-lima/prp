@@ -34,6 +34,14 @@ func (err *Error) Unwrap() error {
 	return err.Cause
 }
 
+func (err *Error) IsClient() bool {
+	return err.Kind.IsClient()
+}
+
+func (err *Error) IsInternal() bool {
+	return !err.Kind.IsClient()
+}
+
 func (err Error) MarshalJSON() ([]byte, error) {
 	var efj errorForJSON
 	efj = errorForJSON(err)
